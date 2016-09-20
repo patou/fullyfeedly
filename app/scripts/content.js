@@ -148,8 +148,9 @@ function addShowArticlePreviewBtn(showPreviewFunction) {
  * Process the content of the article and add it to the page
  *
  * @param data Object JSON decoded response.  Null if the request failed.
+ * @param outputHtml If the output is html.
  */
-function onBoilerpipeArticleExtracted(data, overlay) {
+function onBoilerpipeArticleExtracted(data, overlay, outputHtml) {
 
     // Check if the API failed to extract the text
     if (data.status === null || data.status !== 'success') {
@@ -179,7 +180,10 @@ function onBoilerpipeArticleExtracted(data, overlay) {
 
     // Replace the preview of the article with the full text
     var articlePreviewHTML = contentElement.innerHTML;
-    contentElement.innerHTML = articleContent;
+    if (outputHtml)
+      contentElement.innerHTML = articleContent;
+    else
+      contentElement.innerText = articleContent;
 
     // Clear image styles to fix formatting of images with class/style/width information in article markup
     Array.prototype.slice.call(contentElement.querySelectorAll('img')).forEach(function(el) {
@@ -193,13 +197,18 @@ function onBoilerpipeArticleExtracted(data, overlay) {
     successOverlay('done', overlay);
 }
 
-function boilerpipeRequest(xhr, overlay) {
+function boilerpipeRequest(xhr, overlay, outputHtml) {
     return function() {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
                 // Operation succeded
-                var data = JSON.parse(xhr.responseText);
-                onBoilerpipeArticleExtracted(data, overlay);
+                if (outputHtml) {
+                    var data = {response: {content: xhr.responseText}, "status": "success"};
+                }
+                else {
+                  var data = JSON.parse(xhr.responseText);
+                }
+                onBoilerpipeArticleExtracted(data, overlay, outputHtml);
             } else if (xhr.status === 503) {
                 console.log('[FullyFeedly] Boilerpipe API exceeded quota');
                 failOverlay('APIOverQuota', overlay);
@@ -361,7 +370,15 @@ function fetchPageContent() {
                 encodedPageUrl +
                 '&extractor=ArticleExtractor&output=json&extractImages=';
 
-        xhr.onreadystatechange = boilerpipeRequest(xhr, overlay);
+        xhr.onreadystatechange = boilerpipeRequest(xhr, overlay, false);
+    }
+    else if (options.extractionAPI === 'Boilerpipe HTML') {
+        // Prepare the request to Boilerpipe
+        url = 'http://boilerpipe-web.appspot.com/extract?url=' +
+                encodedPageUrl +
+                '&extractor=ArticleExtractor&output=htmlFragment&extractImages=';
+
+        xhr.onreadystatechange = boilerpipeRequest(xhr, overlay, true);
     }
     else if (options.extractionAPI === 'Readability') {
         // Check if the key is set
