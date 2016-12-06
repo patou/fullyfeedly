@@ -51,7 +51,7 @@
         "storage",
         "https://boilerpipe-web.appspot.com/*",
         "https://www.readability.com/api/*",
-        "https://mercury.postlight.com/*"
+        "https://mercury.postlight.com/*",
         "http://*/",
         "https://*/"
     ],

@@ -237,6 +237,8 @@ function onArticleExtractorExtracted(data, overlay) {
 
     // Get the content of the article
     var articleContent = $(data).find("article").html();
+    if (!articleContent)
+      articleContent = $(data).find("body").html();
 
     // Search the element of the page that will containt the text
     var entryElement = document.querySelector('.u100Entry');
@@ -307,8 +309,6 @@ function onMercuryReadabilityArticleExtracted(data, overlay) {
         failOverlay('contentNotFound', overlay);
         return;
     }
-
-    var contentElement = entryElement.querySelector('.entryBody');
 
     // If there is an image we want to keep it
     var articleImage = contentElement.querySelector('img');
